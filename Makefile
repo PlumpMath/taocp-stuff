@@ -1,4 +1,4 @@
-CFLAGS=-Wall -g -Istb
+CFLAGS=-Wall -g
 
 check-syntax:
 	clang -o /dev/null $(CFLAGS) -S ${CHK_SOURCES}
