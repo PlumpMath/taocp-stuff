@@ -14,6 +14,7 @@ struct Term {
 #define MAX_TERMS 50
 struct Polynomial {
     int num_terms;
+    int freelist;
     struct Term terms[MAX_TERMS];
 };
 
@@ -87,7 +88,19 @@ polynomial_add_term(struct Polynomial* p,
     assert(coefficient != 0);
     
     // push term
-    struct Term* new_term = &p->terms[++p->num_terms];
+    struct Term* new_term;
+    if (p->freelist != 0) {
+        new_term = &p->terms[p->freelist];
+        p->freelist = new_term->next;
+                
+    } else {
+        if (p->num_terms == MAX_TERMS) {
+            // Error, too many terms already.
+            assert(false);
+        }
+        new_term = &p->terms[++p->num_terms];
+    }
+    
     new_term->coefficient = coefficient;
     new_term->x_power = x_power;
     new_term->y_power = y_power;
@@ -146,19 +159,40 @@ polynomial_add_polynomial(struct Polynomial* p, struct Polynomial* q)
         } else if (q_compare == p_compare) {
             // add coefficiants
             p_term->coefficient += q_term->coefficient;
+
+            // if coefficient == 0, remove term.
+            if (p_term->coefficient == 0) {
+
+                // push old term to freelist
+                p_term->next = p->freelist;
+                p->freelist = current_term;
+
+                // remove term from linked list
+                p->terms[prev_term].next = p_term->next;
+                current_term = p_term->next;
+            }
             
             // step q
             current_q_term = q_term->next;
             
         } else {
             // insert node from q here.
-            if (p->num_terms == MAX_TERMS) {
-                // Error, too many terms already.
-                assert(false);
-            }
 
             // push new term onto p.
-            struct Term* new_term = &p->terms[++p->num_terms];
+            // try to pop from free list.
+            struct Term* new_term;
+            if (p->freelist != 0) {
+                new_term = &p->terms[p->freelist];
+                p->freelist = new_term->next;
+                
+            } else {
+                if (p->num_terms == MAX_TERMS) {
+                    // Error, too many terms already.
+                    assert(false);
+                }
+                new_term = &p->terms[++p->num_terms];
+            }
+
             *new_term = *q_term;
             p->terms[prev_term].next = p->num_terms;
             new_term->next = current_term;
@@ -183,7 +217,7 @@ int main(int argc, char* argv[])
     struct Polynomial q = {};
     polynomial_add_term(&q, 1, 2, 0, 0);  // 1x^2
     polynomial_add_term(&q, -2, 0, 1, 0); // -2y
-    polynomial_add_term(&q, -1, 0, 0, 1);  // -1z
+    polynomial_add_term(&q, -1, 0, 0, 1); // -1z
 
     polynomial_print(p);
     polynomial_print(q);
