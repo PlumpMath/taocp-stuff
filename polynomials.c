@@ -76,18 +76,9 @@ term_comparison(struct Term* term)
             term->z_power);
 }
 
-// Add a new term to the polynomial.
-void
-polynomial_add_term(struct Polynomial* p,
-                    int coefficient,
-                    int x_power,
-                    int y_power,
-                    int z_power)
+struct Term*
+polynomial_push_term(struct Polynomial* p)
 {
-    // Can't have a coefficient of 0.
-    assert(coefficient != 0);
-    
-    // push term
     struct Term* new_term;
     if (p->freelist != 0) {
         new_term = &p->terms[p->freelist];
@@ -100,6 +91,23 @@ polynomial_add_term(struct Polynomial* p,
         }
         new_term = &p->terms[++p->num_terms];
     }
+
+    return new_term;
+}
+
+// Add a new term to the polynomial.
+void
+polynomial_add_term(struct Polynomial* p,
+                    int coefficient,
+                    int x_power,
+                    int y_power,
+                    int z_power)
+{
+    // Can't have a coefficient of 0.
+    assert(coefficient != 0);
+    
+    // push term
+    struct Term* new_term = polynomial_push_term(p);
     
     new_term->coefficient = coefficient;
     new_term->x_power = x_power;
@@ -180,18 +188,7 @@ polynomial_add_polynomial(struct Polynomial* p, struct Polynomial* q)
 
             // push new term onto p.
             // try to pop from free list.
-            struct Term* new_term;
-            if (p->freelist != 0) {
-                new_term = &p->terms[p->freelist];
-                p->freelist = new_term->next;
-                
-            } else {
-                if (p->num_terms == MAX_TERMS) {
-                    // Error, too many terms already.
-                    assert(false);
-                }
-                new_term = &p->terms[++p->num_terms];
-            }
+            struct Term* new_term = polynomial_push_term(p);
 
             *new_term = *q_term;
             p->terms[prev_term].next = p->num_terms;
