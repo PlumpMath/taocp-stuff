@@ -67,13 +67,27 @@ polynomial_print(struct Polynomial p)
     printf("\n");
 }
 
-// @TODO: This won't work for powers over 9. Need a better way to do this.
-int
-term_comparison(struct Term* term)
+int term_compare(struct Term t1, struct Term t2)
 {
-    return (100 * term->x_power +
-            10 * term->y_power +
-            term->z_power);
+    if (t1.x_power < t2.x_power) {
+        return -1;
+    } else if (t1.x_power > t2.x_power) {
+        return 1;
+    } else {
+        if (t1.y_power < t2.y_power) {
+            return -1;
+        } else if (t1.y_power > t2.y_power) {
+            return 1;
+        } else {
+            if (t1.z_power < t2.z_power) {
+                return -1;
+            } else if (t1.z_power > t2.z_power) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }   
+    }
 }
 
 struct Term*
@@ -120,15 +134,14 @@ polynomial_add_term(struct Polynomial* p,
         return;
     }
 
-    int new_term_comparison = term_comparison(new_term);
-
     int prev = 0;
     int current = p->terms[0].next;
     do {
         struct Term* current_term = &p->terms[current];
-        int current_term_comparison = term_comparison(current_term);
-        
-        if (new_term_comparison > current_term_comparison) {
+
+        int comparison = term_compare(*new_term, *current_term);
+
+        if (comparison > 0) {
             p->terms[prev].next = p->num_terms;
             new_term->next = current;
             return;
@@ -156,15 +169,14 @@ polynomial_add_polynomial(struct Polynomial* p, struct Polynomial* q)
         struct Term* p_term = &p->terms[current_term];
         struct Term* q_term = &q->terms[current_q_term];
 
-        int p_compare = term_comparison(p_term);
-        int q_compare = term_comparison(q_term);
+        int comparison = term_compare(*q_term, *p_term);
 
-        if (q_compare < p_compare) {
+        if (comparison < 0) {
             // step p
             prev_term = current_term;
             current_term = p_term->next;
             
-        } else if (q_compare == p_compare) {
+        } else if (comparison == 0) {
             // add coefficiants
             p_term->coefficient += q_term->coefficient;
 
