@@ -67,26 +67,23 @@ polynomial_print(struct Polynomial p)
     printf("\n");
 }
 
-int term_compare(struct Term t1, struct Term t2)
+int
+term_compare(struct Term t1, struct Term t2)
 {
     if (t1.x_power < t2.x_power) {
         return -1;
     } else if (t1.x_power > t2.x_power) {
         return 1;
+    } else if (t1.y_power < t2.y_power) {
+        return -1;
+    } else if (t1.y_power > t2.y_power) {
+        return 1;
+    } else if (t1.z_power < t2.z_power) {
+        return -1;
+    } else if (t1.z_power > t2.z_power) {
+        return 1;
     } else {
-        if (t1.y_power < t2.y_power) {
-            return -1;
-        } else if (t1.y_power > t2.y_power) {
-            return 1;
-        } else {
-            if (t1.z_power < t2.z_power) {
-                return -1;
-            } else if (t1.z_power > t2.z_power) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }   
+        return 0;
     }
 }
 
@@ -95,7 +92,7 @@ polynomial_push_term(struct Polynomial* p)
 {
     struct Term* new_term;
     if (p->freelist != 0) {
-        new_term = &p->terms[p->freelist];
+        new_term = p->terms + p->freelist;
         p->freelist = new_term->next;
                 
     } else {
@@ -103,7 +100,7 @@ polynomial_push_term(struct Polynomial* p)
             // Error, too many terms already.
             assert(false);
         }
-        new_term = &p->terms[++p->num_terms];
+        new_term = p->terms + ++p->num_terms;
     }
 
     return new_term;
